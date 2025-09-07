@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { RoleSelector } from './components/RoleSelector';
 import { InterviewModeSelector } from './components/InterviewModeSelector';
 import { InterviewChat } from './components/InterviewChat';
 import { InterviewSummary } from './components/InterviewSummary';
+import WelcomeScreen from './components/WelcomeScreen';
 
 type AppState = 'role-selection' | 'mode-selection' | 'interview' | 'summary';
 
@@ -15,12 +16,17 @@ interface Message {
 }
 
 function App() {
-  const [currentState, setCurrentState] = React.useState<AppState>('role-selection');
-  const [selectedRole, setSelectedRole] = React.useState<string>('');
-  const [selectedDomain, setSelectedDomain] = React.useState<string>('');
-  const [selectedMode, setSelectedMode] = React.useState<'technical' | 'behavioral'>('technical');
-  const [interviewMessages, setInterviewMessages] = React.useState<Message[]>([]);
-  const [finalScore, setFinalScore] = React.useState<number>(0);
+  const [showChatbot, setShowChatbot] = useState(false); // welcome screen
+  const [currentState, setCurrentState] = useState<AppState>('role-selection');
+  const [selectedRole, setSelectedRole] = useState<string>('');
+  const [selectedDomain, setSelectedDomain] = useState<string>('');
+  const [selectedMode, setSelectedMode] = useState<'technical' | 'behavioral'>('technical');
+  const [interviewMessages, setInterviewMessages] = useState<Message[]>([]);
+  const [finalScore, setFinalScore] = useState<number>(0);
+
+  const handleStart = () => {
+    setShowChatbot(true);
+  };
 
   const handleRoleSelect = (role: string, domain: string) => {
     setSelectedRole(role);
@@ -55,42 +61,49 @@ function App() {
     setCurrentState('mode-selection');
   };
 
+  // ✅ One single return — conditionally render welcome OR full chatbot
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {currentState === 'role-selection' && (
-        <RoleSelector onRoleSelect={handleRoleSelect} />
+    <>
+      {!showChatbot ? (
+        <WelcomeScreen onStart={handleStart} />
+      ) : (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+          {currentState === 'role-selection' && (
+            <RoleSelector onRoleSelect={handleRoleSelect} />
+          )}
+
+          {currentState === 'mode-selection' && (
+            <InterviewModeSelector
+              role={selectedRole}
+              domain={selectedDomain}
+              onModeSelect={handleModeSelect}
+              onBack={handleBackToRoleSelection}
+            />
+          )}
+
+          {currentState === 'interview' && (
+            <InterviewChat
+              role={selectedRole}
+              domain={selectedDomain}
+              mode={selectedMode}
+              onBack={handleBackToModeSelection}
+              onComplete={handleInterviewComplete}
+            />
+          )}
+
+          {currentState === 'summary' && (
+            <InterviewSummary
+              role={selectedRole}
+              domain={selectedDomain}
+              mode={selectedMode}
+              messages={interviewMessages}
+              finalScore={finalScore}
+              onNewInterview={handleNewInterview}
+            />
+          )}
+        </div>
       )}
-      
-      {currentState === 'mode-selection' && (
-        <InterviewModeSelector
-          role={selectedRole}
-          domain={selectedDomain}
-          onModeSelect={handleModeSelect}
-          onBack={handleBackToRoleSelection}
-        />
-      )}
-      
-      {currentState === 'interview' && (
-        <InterviewChat
-          role={selectedRole}
-          domain={selectedDomain}
-          mode={selectedMode}
-          onBack={handleBackToModeSelection}
-          onComplete={handleInterviewComplete}
-        />
-      )}
-      
-      {currentState === 'summary' && (
-        <InterviewSummary
-          role={selectedRole}
-          domain={selectedDomain}
-          mode={selectedMode}
-          messages={interviewMessages}
-          finalScore={finalScore}
-          onNewInterview={handleNewInterview}
-        />
-      )}
-    </div>
+    </>
   );
 }
 
