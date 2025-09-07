@@ -1,5 +1,8 @@
 import React from 'react';
 import { ArrowLeft, Download, TrendingUp, TrendingDown, BookOpen, Award, Target, Clock } from 'lucide-react';
+import { Document, Packer, Paragraph, HeadingLevel, TextRun } from 'docx';
+import { saveAs } from 'file-saver';
+
 
 interface Message {
   id: string;
@@ -136,32 +139,58 @@ export function InterviewSummary({
     return resources;
   };
 
-  const exportSummary = () => {
-    const summaryData = {
-      role,
-      domain,
-      mode,
-      finalScore,
-      date: new Date().toLocaleDateString(),
-      questionCount,
-      answeredCount,
-      skippedCount,
-      strengths: getStrengths(),
-      improvements: getImprovements(),
-      scores: scores
-    };
-    
-    const dataStr = JSON.stringify(summaryData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `interview-summary-${role}-${Date.now()}.json`;
-    link.click();
-    
-    URL.revokeObjectURL(url);
+const exportSummary = () => {
+  const summaryData = {
+    role,
+    domain,
+    mode,
+    finalScore,
+    date: new Date().toLocaleDateString(),
+    questionCount,
+    answeredCount,
+    skippedCount,
+    strengths: getStrengths(),
+    improvements: getImprovements(),
+    resources: getRecommendedResources(),
   };
+
+  const doc = new Document({
+    sections: [
+      {
+        children: [
+          new Paragraph({ text: `Interview Summary - ${summaryData.role}`, heading: HeadingLevel.TITLE }),
+          new Paragraph(`Domain: ${summaryData.domain}`),
+          new Paragraph(`Mode: ${summaryData.mode}`),
+          new Paragraph(`Date: ${summaryData.date}`),
+          new Paragraph(`Final Score: ${summaryData.finalScore.toFixed(1)}/10`),
+          new Paragraph(`Answered: ${summaryData.answeredCount}/${summaryData.questionCount}`),
+          new Paragraph(`Skipped: ${summaryData.skippedCount}`),
+
+          new Paragraph({ text: "Strengths", heading: HeadingLevel.HEADING_2 }),
+          ...summaryData.strengths.map((s) => new Paragraph(`• ${s}`)),
+
+          new Paragraph({ text: "Areas for Improvement", heading: HeadingLevel.HEADING_2 }),
+          ...summaryData.improvements.map((i) => new Paragraph(`• ${i}`)),
+
+          new Paragraph({ text: "Recommended Resources", heading: HeadingLevel.HEADING_2 }),
+          ...summaryData.resources.map((res) =>
+            new Paragraph({
+              children: [
+                new TextRun({ text: `${res.title}: `, bold: true }),
+                new TextRun(`${res.description} (${res.url})`)
+              ]
+            })
+          )
+        ]
+      }
+    ]
+  });
+
+  Packer.toBlob(doc).then((blob) => {
+    saveAs(blob, `interview-summary-${role}-${Date.now()}.docx`);
+  });
+};
+
 
   return (
     <div className="max-w-4xl mx-auto p-6">
