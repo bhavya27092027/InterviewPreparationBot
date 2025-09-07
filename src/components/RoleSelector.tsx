@@ -1,5 +1,7 @@
 import React from 'react';
-import { User, Code, BarChart3, Briefcase, Brain, Database } from 'lucide-react';
+import { User, Code, BarChart3, Briefcase, Brain, Database, Moon, Sun } from 'lucide-react';
+import { RoleCard } from '../components/RoleCard';
+import { DomainButton } from '../components/DomainButton';
 
 interface Role {
   id: string;
@@ -17,37 +19,48 @@ const roles: Role[] = [
     id: 'software-engineer',
     title: 'Software Engineer',
     icon: Code,
-    domains: ['Frontend', 'Backend', 'Full Stack', 'Mobile', 'DevOps']
+    domains: ['Frontend', 'Backend', 'Full Stack', 'Mobile', 'DevOps'],
   },
   {
     id: 'product-manager',
     title: 'Product Manager',
     icon: Briefcase,
-    domains: ['Consumer Products', 'B2B SaaS', 'Mobile Apps', 'Platform', 'Growth']
+    domains: ['Consumer Products', 'B2B SaaS', 'Mobile Apps', 'Platform', 'Growth'],
   },
   {
     id: 'data-analyst',
     title: 'Data Analyst',
     icon: BarChart3,
-    domains: ['Business Intelligence', 'Marketing Analytics', 'Financial Analysis', 'Operations', 'Product Analytics']
+    domains: ['Business Intelligence', 'Marketing Analytics', 'Financial Analysis', 'Operations', 'Product Analytics'],
   },
   {
     id: 'data-scientist',
     title: 'Data Scientist',
     icon: Brain,
-    domains: ['Machine Learning', 'Deep Learning', 'NLP', 'Computer Vision', 'Recommendation Systems']
+    domains: ['Machine Learning', 'Deep Learning', 'NLP', 'Computer Vision', 'Recommendation Systems'],
   },
   {
     id: 'system-designer',
     title: 'System Designer',
     icon: Database,
-    domains: ['Distributed Systems', 'Microservices', 'Scalability', 'Cloud Architecture', 'Database Design']
-  }
+    domains: ['Distributed Systems', 'Microservices', 'Scalability', 'Cloud Architecture', 'Database Design'],
+  },
 ];
 
 export function RoleSelector({ onRoleSelect }: RoleSelectorProps) {
   const [selectedRole, setSelectedRole] = React.useState<Role | null>(null);
   const [selectedDomain, setSelectedDomain] = React.useState<string>('');
+  const [darkMode, setDarkMode] = React.useState(() =>
+    typeof window !== 'undefined' ? document.documentElement.classList.contains('dark') : false
+  );
+
+  React.useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   const handleContinue = () => {
     if (selectedRole && selectedDomain) {
@@ -56,68 +69,67 @@ export function RoleSelector({ onRoleSelect }: RoleSelectorProps) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="text-center mb-8">
-        <User className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Choose Your Target Role</h1>
-        <p className="text-gray-600">Select the position and domain you want to practice interviewing for</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 transition-colors duration-300">
+      <div className="max-w-5xl mx-auto text-center relative">
+        {/* Dark mode toggle */}
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          aria-label="Toggle Dark Mode"
+          className="absolute top-0 right-0 mt-4 mr-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+        >
+          {darkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+        </button>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {roles.map((role) => {
-          const Icon = role.icon;
-          return (
-            <button
+        <User className="w-16 h-16 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-2">Choose Your Target Role</h1>
+        <p className="text-md text-gray-600 dark:text-gray-300 mb-10">
+          Select the position and domain you want to practice interviewing for
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-10">
+          {roles.map((role) => (
+            <RoleCard
               key={role.id}
-              onClick={() => setSelectedRole(role)}
-              className={`p-6 rounded-lg border-2 transition-all hover:shadow-md ${
-                selectedRole?.id === role.id
-                  ? 'border-blue-500 bg-blue-50 shadow-md'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <Icon className={`w-8 h-8 mx-auto mb-3 ${
-                selectedRole?.id === role.id ? 'text-blue-600' : 'text-gray-600'
-              }`} />
-              <h3 className="font-semibold text-gray-900">{role.title}</h3>
-            </button>
-          );
-        })}
-      </div>
+              title={role.title}
+              icon={role.icon}
+              selected={selectedRole?.id === role.id}
+              onClick={() => {
+                setSelectedRole(role);
+                setSelectedDomain('');
+              }}
+            />
+          ))}
+        </div>
 
-      {selectedRole && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Select Domain for {selectedRole.title}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {selectedRole.domains.map((domain) => (
-              <button
-                key={domain}
-                onClick={() => setSelectedDomain(domain)}
-                className={`p-3 rounded-md border transition-all ${
-                  selectedDomain === domain
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                {domain}
-              </button>
-            ))}
+        {selectedRole && (
+          <div className="bg-white/60 dark:bg-gray-700 backdrop-blur-md border border-gray-200 dark:border-gray-600 rounded-2xl p-6 shadow-md mb-8">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+              Select Domain for {selectedRole.title}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {selectedRole.domains.map((domain) => (
+                <DomainButton
+                  key={domain}
+                  domain={domain}
+                  selected={selectedDomain === domain}
+                  onClick={() => setSelectedDomain(domain)}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {selectedRole && selectedDomain && (
-        <div className="text-center">
-          <button
-            onClick={handleContinue}
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-          >
-            Continue to Interview Mode
-          </button>
-        </div>
-      )}
+        {selectedRole && selectedDomain && (
+          <div className="mt-6">
+            <button
+              onClick={handleContinue}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg transition-colors"
+            >
+              Continue to Interview Mode
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
